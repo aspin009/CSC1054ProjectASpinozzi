@@ -1,0 +1,262 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.Scanner;
+import java.util.ArrayList;
+import java.io.*;
+
+public class MainPanel extends JPanel
+{
+   //Create variables
+   private int xPos;
+   private int yPos;
+   
+   private int cols;
+   private int rows;
+   
+   private Player1 player;
+   private ArrayList<ArrayList<GameObject>> gameGrid = new ArrayList<ArrayList<GameObject>>();
+   private MainPanel p;
+   
+   public MainPanel()
+   {
+      //listeners
+      p = this;
+      addKeyListener(new KeyEventDemo());
+      Timer time = new Timer(10, new TimeListener());
+      setPreferredSize(new Dimension(800, 600));
+      setFocusable(true);
+      
+      try
+      {
+         //file read
+         Scanner read = new Scanner(new File("projectMap.txt"));
+         while(read.hasNext())
+         {
+            //player data read
+            xPos = read.nextInt();
+            yPos = read.nextInt();
+            
+            
+            player = new Player1((xPos*25), (yPos*25), Color.BLUE);
+            
+            
+            //grid data read
+            rows = read.nextInt();
+            cols = read.nextInt();
+            //fill 2D array
+            for(int i=0;i<rows;i++)
+            {
+               ArrayList<GameObject> innerList = new ArrayList<GameObject>();
+               
+               gameGrid.add(innerList);
+            }
+
+            //level data read
+            int xPos = 0;
+            int yPos = 0;
+            
+            //grid loop
+            for(int i=0;i<rows;i++)
+            {
+               xPos = 0;
+               for(int j=0;j<cols;j++)
+               {
+                  int temp = read.nextInt();
+                  if(temp == 1)
+                  {
+                    Block block = new Block(xPos, yPos, Color.BLACK);
+                    gameGrid.get(i).add(block);
+                  } 
+                  //victory
+                  if(temp == 2)
+                  {
+                    VictoryBlock victory = new VictoryBlock(xPos, yPos, Color.MAGENTA);
+                    gameGrid.get(i).add(victory);
+                  } 
+                  //nulls if it's 0
+                  if(temp == 0)
+                  {
+                    gameGrid.get(i).add(null);
+                  } 
+                  xPos+=25; //increment width
+               }
+               yPos+=25; //increment height
+               
+            }
+            
+         }
+      }
+      catch(FileNotFoundException FNFE)
+      {
+         System.out.println("File not found");
+      }
+      
+      time.start();
+
+   }
+   public void paintComponent(Graphics g)    
+   {  
+      super.paintComponent(g);
+      //draw game board
+      for(int i=0;i<rows;i++)
+      {
+         for(int j=0;j<cols;j++)
+         {
+            if(!(gameGrid.get(i).get(j) == null))
+            {
+               Color c = gameGrid.get(i).get(j).getColor();
+               gameGrid.get(i).get(j).draw(g, c);
+            }
+         }
+      }
+      
+      //create player
+      Color playerCol = player.getColor();
+      player.draw(g, playerCol); 
+   }
+   
+  //Key listener
+  public class KeyEventDemo implements KeyListener 
+  {
+    public void keyTyped(KeyEvent e){}
+    public void keyReleased(KeyEvent e)
+    {
+      //if key released, stop moving
+      if(e.getKeyCode() == KeyEvent.VK_A)
+      {
+         left = false;
+         xMove = 0;
+      }
+
+      if(e.getKeyCode() == KeyEvent.VK_D)
+      {
+         right = false;
+         xMove = 0;
+      }
+      
+    } 
+    public void keyPressed(KeyEvent e) 
+    {
+      //jumping for when on ground
+      if(e.getKeyCode() == KeyEvent.VK_W)
+      {
+         if(player.onFloor(gameGrid))
+         {
+            jump = 7;
+            N=1;
+         } 
+      }
+      //L/R
+      if(e.getKeyCode() == KeyEvent.VK_A)
+      {
+         left = true;
+      }
+
+      if(e.getKeyCode() == KeyEvent.VK_D)
+      {
+         right = true;
+      }
+      repaint();
+    } 
+   }
+   
+   //time listeners
+   private boolean gravity;
+   private double jump;
+   private boolean right;
+   private boolean left;
+   private int xMove;
+   private int yMove;
+   private int N = 1;
+   private int accel = 0;
+   
+   public class TimeListener implements ActionListener
+   {
+      public void actionPerformed(ActionEvent e)
+      {  
+         //reset grav if player on ground
+         if(player.onFloor(gameGrid))
+         {
+            N = 2;
+            gravity = false;
+         }
+         
+         //right
+         if(right)
+         {
+            xMove = 2;
+            player.move(xMove, 0, gameGrid);
+         }
+         
+         //left
+         if(left)
+         {
+            xMove = -2;
+            player.move(xMove, 0, gameGrid);
+         }
+         
+         //if jumping and hit ceiling
+         if(player.onRoof(gameGrid))
+         {
+            jump = 0;
+         }
+         
+         //gravity
+         if(!(player.onFloor(gameGrid)))
+         {
+            gravity = true;
+            //create acceleration
+            if(accel % 20 == 0)
+            {
+               if(N<7)
+               {
+                  N+=1;
+               }
+            }
+            
+            //move player with gravity
+            for(int i=0;i<N;i++)
+            {
+               yMove = 1;
+               player.move(0, yMove, gameGrid);
+            }
+         }
+         
+         //jump movement
+         if(jump>0)
+         {
+            for(int i=0;i<jump;i++)
+            {              
+               player.move(0, -1, gameGrid);
+            } 
+         }
+         
+         //adjust values
+         accel++;
+         if(!(player.onFloor(gameGrid)))
+         {
+            jump-=0.1;
+         }
+         p.repaint();
+         
+         //victory pane
+         if(player.victorious())
+         {
+            OptionPane victory = new OptionPane();
+         }   
+
+      } 
+   }
+   
+   //win
+   public class OptionPane 
+   {  
+      OptionPane()
+      {  
+         JOptionPane.showMessageDialog(p,"WIN","GG",JOptionPane.WARNING_MESSAGE);   
+         System.exit(1);  
+      }  
+   }
+    
+}
