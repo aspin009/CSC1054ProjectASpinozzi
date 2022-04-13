@@ -1,0 +1,145 @@
+import java.util.*;
+import java.io.*;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class Player1 extends GameObject
+{
+   //Player variables
+   Color c;
+   private static boolean victory;
+   
+   //Player constructor
+   public Player1(int x, int y, Color c)
+   {
+      super(x,y,c);
+      this.c = c;    
+   }
+
+   //Move method
+   public boolean move(int xMove, int yMove, ArrayList<ArrayList<GameObject>> map)
+   {
+      //Return boolean move
+      boolean move = true;
+      
+      //Find current x and y location
+      int tempX = getX();
+      int tempY = getY();
+      
+      //Set locations of move
+      int xCheck = getX() + xMove;
+      int yCheck = getY() + yMove;
+      
+      //if x collide, move back
+      setX(xCheck);
+      if(collides(map))
+      {
+         setX(tempX);
+         move = false;
+      }
+      
+      //if y collides, move back
+      setY(yCheck);
+      if(collides(map))
+      {
+         setY(tempY);
+         move = false;
+      }
+       
+      return move;
+   
+   } 
+   
+   public boolean onFloor(ArrayList<ArrayList<GameObject>> map)
+   {
+      //return onGround
+      boolean onGround = false;
+      
+      //get current y
+      int tempY = getY();
+      
+      //move y over by one pixel
+      int yCheck = getY() + 1;
+      setY(yCheck);
+      
+      //check floor collision
+      if(collides(map))
+      {
+         onGround = true;
+      } 
+      
+      //move y back and return onGround
+      setY(tempY);
+      return onGround;
+   } 
+   public boolean onRoof(ArrayList<ArrayList<GameObject>> map)
+   {
+      //returns onCeiling
+      boolean onCeiling = false;
+      
+      //get current y
+      int tempY = getY();
+      
+      //move y over by one pixel
+      int yCheck = getY() - 1;
+      setY(yCheck);
+      
+      //check floor collision
+      if(collides(map))
+      {
+         onCeiling = true;
+      } 
+      //move y back and return onCeiling
+      setY(tempY);
+      return onCeiling;
+   } 
+   
+   public boolean collides(ArrayList<ArrayList<GameObject>> map)
+   {
+      //return collide
+      boolean collide = false;
+      
+      //Find player location
+      int blockLevelY = getY()/25;
+      int blockLevelX = getX()/25+1;
+      
+      //error proof for out of bounds
+      if(blockLevelY == 0)
+      {
+         blockLevelY = 1;
+      }
+      if(blockLevelX <= 0)
+      {
+         blockLevelX = 1;
+      }
+      
+      //checks collision
+      for(int i=(blockLevelX-1);i<(blockLevelX+2);i++)
+      {
+         for(int j=(blockLevelY-1);j<(blockLevelY+2);j++)
+         {
+            if(!(map.get(j).get(i) == null)) //If object is null, disregard
+            {
+               if(super.collides(map.get(j).get(i))) //Call super collide method
+               {
+                  collide = true;
+                  if(map.get(j).get(i) instanceof VictoryBlock) //If collision is instance of victory block, set victory to be true
+                  {
+                     victory = true;
+                  }
+               }
+            }
+         }
+      }
+      return collide;
+   } 
+   
+   //return victory if player hits victory block
+   public static boolean victorious()
+   {
+      return victory;
+   }
+
+
+}
