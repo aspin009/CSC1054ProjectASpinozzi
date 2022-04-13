@@ -1,0 +1,32 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+public class MainFrame extends JFrame
+{
+   public MainFrame()
+   {
+      super("Main Frame");
+      //add panel
+      Container contents = getContentPane();
+      MainPanel mp = new MainPanel();
+      
+      //black edge
+      contents.setBackground(Color.GRAY); 
+      
+      //main stuff
+      contents.add(mp);
+      contents.setLayout(new FlowLayout(FlowLayout.CENTER));
+      setSize(823,648);
+      setVisible(true);      
+      
+      mp.requestFocus();  
+   }
+   public static void main(String[] args)
+   {
+      MainFrame theFrame = new MainFrame();
+      theFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+      theFrame.setBackground(Color.GRAY);
+   }
+
+}
